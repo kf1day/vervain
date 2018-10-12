@@ -1,72 +1,88 @@
 <?php namespace model\acl;
+use \model\cache\iCacher;
+
+class rAuthUserInfo {
+	public $name = '';
+	public $secret = '';
+	private $groups = [];
+
+	public function __construct( array $user_info ) {
+		$this->name = $user_info['name'];
+		$this->secret = $user_info['secret'];
+		$this->groups = $user_info['groups'] ?? [];
+	}
+
+	public function in_group( string $group_name ) {
+		if ( ! in_array( $group_name, $this->groups ) ) {
+			throw new \EClientError( 403 );
+		}
+	}
+}
 
 abstract class cAuth extends \app\cModel {
 
 	/**
 	 * Cacher class
 	 */
-	protected $cw = null;
+	private $cache = null;
 
 	/**
 	 *  User info
-	 * @var rAuthUser
+	 * @var rAuthUserInfo
 	 */
-	protected $ui = null;
-
-
+	private $user = null;
 
 	abstract public function get_user( string $uid ): array;
 
-
-	public function __construct( $cache ) {
-		$this->cw = $cache;
+	public function __construct( iCacher $cache ) {
+		$this->cache = $cache;
+//		$this->user = new rAuthUserInfo();
 	}
 
 	final public function auth_server() {
 		if ( $u = $_SERVER['PHP_AUTH_USER'] ?? false ) {
 			$u = strtolower( $u );
-			$this->ui = $this->get_user( $u );
-			$this->ui['id'] = $this->usrcode( $u );
-			$this->cw->set( 'acl_' . $this->ui['id'], $this->ui );
-			return true;
+			$uid = $this->usrcode( $u );
+			$t = $this->get_user( $u );
+			$this->user = new rAuthUserInfo( $t );
+			$this->cache->set( 'acl_' . $uid, $t );
+
+			return [ $uid, $this->keyring( $t['secret'] ) ];
 		}
 		throw new \Exception( 'Failed to fetch authorized user' );
 	}
 
-	final public function auth_cookie( bool $ignore_cache = false ) {
-		if ( $uid = $_COOKIE['UID'] ?? false and $hash = $_COOKIE['HASH'] ?? false ) {
-			$this->ui = $this->cw->get( 'acl_' . $uid, function( $uid ) {
-				$u = $this->usrcode( $uid, 1 );
-				return $this->get_user( $u );
-			}, [ $uid ] );
-			if ( $this->keyring( $this->ui['secret'], $hash ) ) return true;
+	final public function auth_cookie() {
+		if ( $this->user !== null ) return $this->user;
+
+		$uid = $_COOKIE['UID'] ?? false;
+		$hash = $_COOKIE['HASH'] ?? false;
+		if ( $uid && $hash ) {
+			if ( $u = $this->usrcode( $uid, true ) ) {
+				$t = $this->cache->get( 'acl_' . $uid, [ $this, 'get_user' ], [ $u ] );
+				if ( $this->keyring( $t['secret'], $hash ) ) {
+					$this->user = new rAuthUserInfo( $t );
+					return $this->user;
+				}
+			}
 		}
-		throw new \EClientError( 403 );
+		throw new \EClientError( 401 );
 	}
 
 	public function get_name() {
-		return ( $this->ui === null ) ? '' : $this->ui['name'];
+		return $this->user->name ?? '';
 	}
 
-	public function get_groups() {
-		return ( $this->ui === null ) ? '' : $this->ui['groups'];
-	}
-
-
-	public function get_token() {
-		return [ $this->ui['id'], $this->keyring( $this->ui['secret'] ) ];
-	}
-
-	final protected function keyring( $secret, $compare = null ) {
+	final private function keyring( $secret, $compare = null ) {
 		$hash = hash( 'sha256', APP_HASH . $secret . $_SERVER['REMOTE_ADDR'] );
-		if ( $compare !== null ) {
-			return ( $hash === $compare );
-		} else {
+		if ( $compare === null ) {
 			return $hash;
+		} else {
+			return ( $hash === $compare );
 		}
 	}
 
-	final protected function usrcode( $uid, $decode = false ) {
+	final private function usrcode( $uid, bool $decode = false ) {
 		if ( $decode ) {
 			return @hex2bin( $uid ) ?? false;
 		} else {

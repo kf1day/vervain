@@ -11,6 +11,7 @@ final class instance {
 			$cvar = OPT_DEFAULT_CACHE;
 			$cvar_args = OPT_DEFAULT_CACHE_ARGS;
 		} else {
+			$cvar = str_replace( '/', '\\', $cvar );
 			$cvar_args = $_SERVER['VERVAIN_CACHE_ARGS'] ?? '';
 			$cvar_args = explode( ',', $cvar_args );
 		}

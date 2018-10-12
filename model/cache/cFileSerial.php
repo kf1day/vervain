@@ -12,8 +12,8 @@ class cFileSerial implements iCacher {
 
 	public function __construct() {
 		if (  extension_loaded( 'igbinary' ) ) $this->ig = true;
-		cFileSystem::md( static::PATH );
-		$t = cFileSystem::rf( static::PATH . '/__fserial__', $this->ig );
+		cFileSystem::md( self::PATH );
+		$t = cFileSystem::rf( self::PATH . '/__fserial__', $this->ig );
 		if ( $t !== false ) {
 			$t = ( $this->ig ) ? igbinary_unserialize( $t ) : unserialize( $t );
 		}
@@ -23,7 +23,7 @@ class cFileSerial implements iCacher {
 	public function __destruct() {
 		if ( $this->changed )  {
 			$t = ( $this->ig ) ? igbinary_serialize( [ $this->pt, $this->vx ] ) : serialize( [ $this->pt, $this->vx ] );
-			cFileSystem::wf( static::PATH . '/__fserial__', $t, $this->ig );
+			cFileSystem::wf( self::PATH . '/__fserial__', $t, $this->ig );
 		}
 	}
 

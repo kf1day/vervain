@@ -10,13 +10,13 @@ class cFileSystem {
 		switch( $type ) {
 			case false:
 				if ( ! mkdir( $path, 0700, true ) ) {
-					throw new \Exception( 'Cannot create directory: '.$path );
+					throw new \Exception( 'Cannot create directory: ' . $path );
 				}
 			case 'dir':
 				return true;
 
 			default:
-				throw new \Exception( 'Path is not a directory: '.$path );
+				throw new \Exception( 'Path is not a directory: ' . $path );
 		}
 	}
 
@@ -34,7 +34,7 @@ class cFileSystem {
 			case false:
 				return false;
 			default:
-				throw new \Exception( 'Path is not a file: '.$path );
+				throw new \Exception( 'Path is not a file: ' . $path );
 		}
 	}
 
@@ -51,7 +51,7 @@ class cFileSystem {
 				fclose( $h );
 				return true;
 			default:
-				throw new \Exception( 'Path is not a file: '.$path );
+				throw new \Exception( 'Path is not a file: ' . $path );
 		}
 	}
 

@@ -1,15 +1,24 @@
 <?php namespace model\acl;
 use \model\db\cLDAP;
+use \model\cache\iCacher;
 
 class cAuthMSAD extends cAuth {
 
 	protected $pt = null;
 	protected $args = [];
+	protected $target_groups = [];
 
+	const BIT_AND = ':1.2.840.113556.1.4.803:'; // LDAP_MATCHING_RULE_BIT_AND
+	const BIT_OR = ':1.2.840.113556.1.4.804:'; // LDAP_MATCHING_RULE_BIT_OR
+	const IN_CHAIN = ':1.2.840.113556.1.4.1941:'; //LDAP_MATCHING_RULE_IN_CHAIN
 
-	public function __construct( $cache, $host, $port, $base, $user, $pass ) {
-		$this->args = [ $host, $port, $base, $user, $pass ];
+	public function __construct( iCacher $cache, $host, $port, $base, $user, $pass ) {
 		parent::__construct( $cache );
+		$this->args = [ $host, $port, $base, $user, $pass ];
+	}
+
+	public function set_target_groups() {
+		$this->target_groups = func_get_args();
 	}
 
 	public function get_user( string $uid ): array {
@@ -20,16 +29,25 @@ class cAuthMSAD extends cAuth {
 			'objectClass' => 'user',
 			'objectCategory' => 'person',
 			'userPrincipalName' => $uid,
+//			'!userAccountControl:1.2.840.113556.1.4.803:' => '2',
 		];
-		if ( $this->pt->select( '', [ 'dn', 'displayName', 'objectGUID' ], $filter ) !== 1 ) throw new \EClientError( 403 );
+		if ( $this->pt->select( '', [ 'dn', 'displayName', 'objectGUID' ], $filter ) !== 1 ) throw new \EClientError( 401 );
 		$t = $this->pt->fetch();
-
-		$this->pt->select( '', [ 'dn', 'objectGUID', 'sAMAccountName' ], [ 'objectClass' => 'group', 'objectCategory' => 'group', 'member:1.2.840.113556.1.4.1941:' => $t[0] ] );
-
 		$fff['name'] = $t[1];
 		$fff['secret'] = $t[2];
-		while ( $r = $this->pt->fetch() ) {
-			$fff['groups'][] = $r;
+
+		$filter = [
+			'objectClass' => 'group',
+			'objectCategory' => 'group',
+			'member' . self::IN_CHAIN => $t[0],
+		];
+		$this->pt->select( '', [ 'sAMAccountName' ], $filter );
+		if ( empty( $this->target_groups ) ) {
+			$fff['groups'] = array_column( $this->pt->fetch_all( false ), 0 );
+		} else {
+			while ( $r = $this->pt->fetch() ) {
+				if ( in_array( $r[0], $this->target_groups ) ) 	$fff['groups'][] = $r[0];
+			}
 		}
 
 		return $fff;

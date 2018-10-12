@@ -65,7 +65,7 @@ class cLDAP extends \app\cModel implements iSQL {
 		return $fff;
 	}
 
-	public function fetch_all() {
+	public function fetch_all( bool $assoc = true ) {
 		if ( $this->rx === null ) return false;
 		$t = ldap_get_entries( $this->pt, $this->rx );
 		$fff = [];
@@ -75,7 +75,11 @@ class cLDAP extends \app\cModel implements iSQL {
 			foreach( $u as &$key ) {
 				$this->xvalue( $key, $t[$i][strtolower($key)] ?? false );
 			}
-			$fff[$t[$i]['dn']] = $u;
+			if ( $assoc ) {
+				$fff[$t[$i]['dn']] = $u;
+			} else {
+				$fff[] = $u;
+			}
 		}
 		$this->el = $this->ax = $this->rx = null;
 		return $fff;
