@@ -11,12 +11,10 @@ class cVURL extends \app\cModel {
 		'DELETE',
 	];
 
-	public static function raw( $uri, $method, $headers = null, $body = null, &$status = null ) {
+	public static function raw( string $uri, $method, array $headers = [], string $body = '', &$status = null ) {
 
 		if ( ! in_array( $method, self::METHODS ) ) return false;
-		if ( ! is_string( $body ) ) $body = '';
-		if ( ! is_array( $headers ) ) $headers = [];
-
+	
 		$opts['http']['method'] = $method;
 		$opts['http']['content'] = $body;
 		$opts['http']['header'] = '';
@@ -30,12 +28,10 @@ class cVURL extends \app\cModel {
 		return $res;
 	}
 
-	public static function get( $uri, $headers = null, $body = null, &$status = null ) {
+	public static function get( $uri, array $headers = [], array $vars = [], &$status = null ) {
 
-		if ( is_array( $body ) ) $body = http_build_query( $body );
-		if ( $body !== '' ) $uri .= '?'.$body;
-
-		return self::raw( $uri, self::METHODS[0], $headers, $body, $status );
+		if ( ! empty( $vars ) ) $uri .= '?' . http_build_query( $vars );
+			return self::raw( $uri, self::METHODS[0], $headers, '', $status );
 	}
 
 	public static function post_form( $uri, $headers = null, $body = null, &$status = null ) {

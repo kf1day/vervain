@@ -1,4 +1,5 @@
 <?php namespace view;
+use \model\cFileSystem;
 
 /**
 	ADOPTER FOR https://github.com/bzick/fenom.git
@@ -11,17 +12,19 @@ class cFenom extends \app\cView {
 
 	protected $pt = null;
 
-	public function __construct( $tpl_path, $options ) {
-		parent::__construct( $tpl_path );
-		$cache = new \model\cache\fs();
+	const PATH = APP_ROOT . '/cache' . '/' . APP_HASH . '/fenom';
+
+	public function __construct( $path, $opts ) {
+		parent::__construct( $path );
+		cFileSystem::md( self::PATH );
 		\Fenom::registerAutoload();
-		$this->pt = \Fenom::factory( $this->tpl_path, $cache->getpath(), $options );
+		$this->pt = \Fenom::factory( $this->path, self::PATH, $opts );
+		header( 'Content-Type: text/html; charset=utf-8' );
+		echo '<!DOCTYPE html>';
 	}
 
 	public function display( $vars = null ) {
-		header( 'Content-Type: text/html; charset=utf-8' );
-		echo '<!DOCTYPE html>';
-		foreach ( $this->tpl_list as $tpl ) {
+		if  ( $tmp = $this->fetch() ) {
 			$this->pt->display( $tpl, $vars );
 		}
 	}

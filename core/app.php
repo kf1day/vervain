@@ -6,47 +6,47 @@ abstract class cModel {
 
 
 abstract class cView {
-	protected $tpl_path = '';
-	protected $tpl_list = [];
-	protected $tpl_next = null;
+	private $path = '';
+	private $list = [];
+	private $next = null;
 
-	public function __construct( $tpl_path = '' ) {
-		$this->tpl_path = ( $tpl_path == '' ) ? APP_SITE : APP_SITE . '/' . trim( $tpl_path, '/' );
-		if ( ! is_dir( $this->tpl_path ) ) throw new \Exception( sprintf( 'Template directory is unreadable: "%s"', $this->tpl_path ) );
+	public function __construct( $path = '' ) {
+		$this->path = ( $path == '' ) ? APP_SITE : APP_SITE . '/' . trim( $path, '/' );
+		if ( ! is_dir( $this->path ) ) throw new \Exception( sprintf( 'Template directory is unreadable: "%s"', $this->path ) );
 	}
 
-	final public function __invoke( $vars = null ) {
-		$this->display( $vars );
+	final public function __invoke() {
+		call_user_func_array( [ $this, 'display'], func_get_args() );
 	}
 
 	public function load() {
 		$template = func_get_args();
 		foreach( $template as $tmp ) {
 			if ( is_string( $tmp ) ) {
-				if ( is_file( $this->tpl_path . '/' . $tmp ) ) {
-					$this->tpl_list[] = $tmp;
+				if ( is_file( $this->path . '/' . $tmp ) ) {
+					$this->list[] = $tmp;
 				} else {
-					throw new \Exception( sprintf( 'Template is not found: "%s/%s"', $this->tpl_path, $tmp ) );
+					throw new \Exception( sprintf( 'Template is not found: "%s/%s"', $this->path, $tmp ) );
 				}
 			}
 		}
 	}
 
 	protected function fetch() {
-		if ( $this->tpl_next === false ) {
+		if ( $this->next === false ) {
 			return false;
-		} elseif ( $this->tpl_next === null ) {
-			$tmp = reset( $this->tpl_list );
+		} elseif ( $this->next === null ) {
+			$tmp = reset( $this->list );
 		} else {
-			$tmp = next( $this->tpl_list );
+			$tmp = next( $this->list );
 		}
-		if ( $this->tpl_next = $tmp ) {
-			return $this->tpl_path . '/' . $tmp;
+		if ( $this->next = $tmp ) {
+			return $this->path . '/' . $tmp;
 		}
 		return false;
 	}
 
-	abstract public function display( $vars = null );
+	abstract public function display();
 }
 
 abstract class cAction {

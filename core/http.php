@@ -12,8 +12,8 @@ final class instance {
 			$cvar_args = OPT_DEFAULT_CACHE_ARGS;
 		} else {
 			$cvar = str_replace( '/', '\\', $cvar );
-			$cvar_args = $_SERVER['VERVAIN_CACHE_ARGS'] ?? '';
-			$cvar_args = explode( ',', $cvar_args );
+			$cvar_args = $_SERVER['VERVAIN_CACHE_ARGS'] ?? [];
+			ksort( $cvar_args );
 		}
 		$ref = null;
 		$cls = null;
