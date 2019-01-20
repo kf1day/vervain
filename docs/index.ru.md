@@ -52,6 +52,9 @@ server {
  
 	location @vervain {
 		fastcgi_param SCRIPT_FILENAME /var/www/vervain/v0/bootstrap.php;
+		fastcgi_param VERVAIN_CACHE model/cache/cMemcached;
+		fastcgi_param VERVAIN_CACHE_ARGS[0] /run/memcache/sock;
+		fastcgi_param VERVAIN_CACHE_ARGS[1] 0;
 		fastcgi_pass unix:/run/php/php7.0-fpm.sock;
 		include fastcgi_params;
 	}
