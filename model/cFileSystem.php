@@ -4,7 +4,7 @@ class cFileSystem {
 
 	// make dir
 	static public function md( $path ) {
-//		$path = APP_SITE . trim( $path, '/' );
+//		$path = APP_ROOT . trim( $path, '/' );
 		$type = @filetype( $path );
 
 		switch( $type ) {
@@ -22,7 +22,7 @@ class cFileSystem {
 
 	// read file
 	static public function rf( $path, $binary = false ) {
-//		$path = APP_SITE . trim( $path, '/' );
+//		$path = APP_ROOT . trim( $path, '/' );
 		$type = @filetype( $path );
 
 		switch( $type ) {
@@ -40,7 +40,7 @@ class cFileSystem {
 
 	// write file #TODO: check dir, check fwrite status
 	static public function wf( $path, $data, $binary = false ) {
-//		$path = APP_SITE . trim( $path, '/' );
+//		$path = APP_ROOT . trim( $path, '/' );
 		$type = @filetype( $path );
 
 		switch( $type ) {

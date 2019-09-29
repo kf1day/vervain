@@ -4,7 +4,7 @@ final class map {
 
 	private $pt = null;
 
-	const PATH = APP_SITE . '/sitemap.php';
+	const PATH = APP_ROOT . '/sitemap.php';
 
 	public function __construct( $cache ) {
 		if ( ! is_file( self::PATH ) ) throw new EMapParser( 'File not found', self::PATH, 'Check the file is existing and readable' );

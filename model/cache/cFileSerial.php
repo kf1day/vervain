@@ -8,7 +8,7 @@ class cFileSerial implements iCacher {
 	protected $ig = false;
 	protected $changed = false;
 
-	const PATH = APP_ROOT . '/cache/' . APP_HASH;
+	const PATH = APP_CORE . '/cache/' . APP_HASH;
 
 	public function __construct() {
 		if (  extension_loaded( 'igbinary' ) ) $this->ig = true;

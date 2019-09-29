@@ -34,17 +34,17 @@ class cN8ive extends \app\cView {
 
 			case self::TYPE_HTML:
 				header( 'Content-Type: text/html; charset=utf-8' );
-				echo '<!DOCTYPE html>'.PHP_EOL;
+				echo '<!DOCTYPE html>' . PHP_EOL;
 				break;
 
 			case self::TYPE_XSLT:
 				header( 'Content-Type: application/xml; charset=utf-8' );
-				echo '<?xml version="1.0" encoding="utf-8"?>'.PHP_EOL;
+				echo '<?xml version="1.0" encoding="utf-8"?>' . PHP_EOL;
 				break;
 
 			case self::TYPE_XML:
 				header( 'Content-Type: text/xml; charset=utf-8' );
-				echo '<?xml version="1.0" encoding="utf-8"?>'.PHP_EOL;
+				echo '<?xml version="1.0" encoding="utf-8"?>' . PHP_EOL;
 				break;
 
 			default:

@@ -12,7 +12,7 @@ class cFenom extends \app\cView {
 
 	protected $pt = null;
 
-	const PATH = APP_ROOT . '/cache' . '/' . APP_HASH . '/fenom';
+	const PATH = APP_CORE . '/cache' . '/' . APP_HASH . '/fenom';
 
 	public function __construct( $path, $opts ) {
 		parent::__construct( $path );

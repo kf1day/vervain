@@ -12,8 +12,7 @@ final class instance {
 			$cvar_args = OPT_DEFAULT_CACHE_ARGS;
 		} else {
 			$cvar = str_replace( '/', '\\', $cvar );
-			$cvar_args = $_SERVER['VERVAIN_CACHE_ARGS'] ?? [];
-			ksort( $cvar_args );
+			$cvar_args = explode( '||', $_SERVER['VERVAIN_CACHE_ARGS'] ?? '' );
 		}
 		$ref = null;
 		$cls = null;
@@ -56,10 +55,10 @@ final class instance {
 
 	private function loader( $classname ) {
 		$classname = str_replace( '\\', '/', $classname );
-		if ( is_file( APP_SITE . '/' . $classname . '.php' ) ) {
-			include APP_SITE . '/' . $classname . '.php';
-		} elseif ( is_file( APP_ROOT . '/' . $classname . '.php' ) ) {
+		if ( is_file( APP_ROOT . '/' . $classname . '.php' ) ) {
 			include APP_ROOT . '/' . $classname . '.php';
+		} elseif ( is_file( APP_CORE . '/' . $classname . '.php' ) ) {
+			include APP_CORE . '/' . $classname . '.php';
 		}
 	}
 }

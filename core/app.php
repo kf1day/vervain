@@ -11,7 +11,7 @@ abstract class cView {
 	private $next = null;
 
 	public function __construct( $path = '' ) {
-		$this->path = ( $path == '' ) ? APP_SITE : APP_SITE . '/' . trim( $path, '/' );
+		$this->path = ( $path == '' ) ? APP_ROOT : APP_ROOT . '/' . trim( $path, '/' );
 		if ( ! is_dir( $this->path ) ) throw new \Exception( sprintf( 'Template directory is unreadable: "%s"', $this->path ) );
 	}
 
