@@ -21,7 +21,7 @@ class cMemcached implements iCacher {
 		} else {
 			throw new \Exception( 'Memcache(d) module not loaded' );
 		}
-		if ( $this->sv === null ) {
+		if ( ! $this->sv ) {
 			throw new \Exception( 'Memcache(d) connection failed' );
 		}
 	}
