@@ -7,6 +7,7 @@ class cAuthMSAD extends cAuth {
 	protected $pt = null;
 	protected $args = [];
 	protected $target_groups = [];
+	protected $remap_users = [];
 
 	const BIT_AND = ':1.2.840.113556.1.4.803:'; // LDAP_MATCHING_RULE_BIT_AND
 	const BIT_OR = ':1.2.840.113556.1.4.804:'; // LDAP_MATCHING_RULE_BIT_OR
@@ -21,15 +22,23 @@ class cAuthMSAD extends cAuth {
 		$this->target_groups = func_get_args();
 	}
 
-	public function get_user( string $uid ): array {
+	public function set_remap_users( array $remap ) {
+		$this->remap_users = $remap;
+	}
+
+	public function fetch_user( string $uid ): array {
 		if ( $this->pt === null ) $this->pt = new cLDAP( $this->args[0], $this->args[1], $this->args[2], $this->args[3], $this->args[4] );
 		$fff = [];
+
+		if ( $this->remap_users !== null && isset( $this->remap_users[$uid] ) ) {
+			$uid = $this->remap_users[$uid];
+		}
 
 		$filter = [
 			'objectClass' => 'user',
 			'objectCategory' => 'person',
 			'userPrincipalName' => $uid,
-//			'!userAccountControl:1.2.840.113556.1.4.803:' => '2',
+//			'!userAccountControl' . self::BIT_AND => '2',
 		];
 		if ( $this->pt->select( '', [ 'dn', 'displayName', 'objectGUID' ], $filter ) !== 1 ) throw new \EClientError( 401 );
 		$t = $this->pt->fetch();

@@ -1,7 +1,7 @@
 <?php namespace model\acl;
 use \model\cache\iCacher;
 
-class rAuthUserInfo {
+class cAuthUserInfo {
 	public $name = '';
 	public $secret = '';
 	private $groups = [];
@@ -21,30 +21,21 @@ class rAuthUserInfo {
 
 abstract class cAuth extends \app\cModel {
 
-	/**
-	 * Cacher class
-	 */
 	private $cache = null;
-
-	/**
-	 *  User info
-	 * @var rAuthUserInfo
-	 */
 	private $user = null;
 
-	abstract public function get_user( string $uid ): array;
+	abstract public function fetch_user( string $uid ): array;
 
 	public function __construct( iCacher $cache ) {
 		$this->cache = $cache;
-//		$this->user = new rAuthUserInfo();
 	}
 
 	final public function auth_server() {
 		if ( $u = $_SERVER['PHP_AUTH_USER'] ?? false ) {
 			$u = strtolower( $u );
 			$uid = $this->usrcode( $u );
-			$t = $this->get_user( $u );
-			$this->user = new rAuthUserInfo( $t );
+			$t = $this->fetch_user( $u );
+			$this->user = new cAuthUserInfo( $t );
 			$this->cache->set( 'acl_' . $uid, $t );
 
 			return [ $uid, $this->keyring( $t['secret'] ) ];
@@ -59,9 +50,9 @@ abstract class cAuth extends \app\cModel {
 		$hash = $_COOKIE['HASH'] ?? false;
 		if ( $uid && $hash ) {
 			if ( $u = $this->usrcode( $uid, true ) ) {
-				$t = $this->cache->get( 'acl_' . $uid, [ $this, 'get_user' ], [ $u ] );
+				$t = $this->cache->get( 'acl_' . $uid, [ $this, 'fetch_user' ], [ $u ] );
 				if ( $this->keyring( $t['secret'], $hash ) ) {
-					$this->user = new rAuthUserInfo( $t );
+					$this->user = new cAuthUserInfo( $t );
 					return $this->user;
 				}
 			}
