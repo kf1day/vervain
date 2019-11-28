@@ -1,11 +1,31 @@
-<?php namespace model\acl;
+<?php namespace model\aaa;
 use \model\db\cLDAP;
 use \model\cache\iCacher;
 
-class cAuthMSAD extends cAuth {
+class cAuthUserInfo {
+	public $name = '';
+	public $secret = '';
+	private $groups = [];
+
+	public function __construct( array $user_info ) {
+		$this->name = $user_info['name'];
+		$this->secret = $user_info['secret'];
+		$this->groups = $user_info['groups'] ?? [];
+	}
+
+	public function in_group( string $group_name ) {
+		if ( ! in_array( $group_name, $this->groups ) ) {
+			throw new \EClientError( 403 );
+		}
+	}
+}
+
+class cAuthMSAD extends cGeneric {
+
+	private $cache = null;
 
 	protected $pt = null;
-	protected $args = [];
+	protected $ldap_args = [];
 	protected $target_groups = [];
 	protected $remap_users = [];
 
@@ -14,8 +34,8 @@ class cAuthMSAD extends cAuth {
 	const IN_CHAIN = ':1.2.840.113556.1.4.1941:'; //LDAP_MATCHING_RULE_IN_CHAIN
 
 	public function __construct( iCacher $cache, $host, $port, $base, $user, $pass ) {
-		parent::__construct( $cache );
-		$this->args = [ $host, $port, $base, $user, $pass ];
+		$this->cache = $cache;
+		$this->ldap_args = [ $host, $port, $base, $user, $pass ];
 	}
 
 	public function set_target_groups() {
@@ -26,8 +46,28 @@ class cAuthMSAD extends cAuth {
 		$this->remap_users = $remap;
 	}
 
-	public function fetch_user( string $uid ): array {
-		if ( $this->pt === null ) $this->pt = new cLDAP( $this->args[0], $this->args[1], $this->args[2], $this->args[3], $this->args[4] );
+	protected function backend_get_pass(): string {
+		if ( $this->data === null ) {
+			$this->data = $this->cache->get( 'uid_' . $this->uid, [ $this, 'fetch_user' ], [ $this->user ] );
+		}
+		return $this->data['secret'];
+	}
+
+	protected function backend_get_data() {
+		if ( $this->data === null ) {
+			$this->data = $this->cache->get( 'uid_' . $this->uid, [ $this, 'fetch_user' ], [ $this->user ] );
+		}
+		if ( $this->pt !== null ) {
+			$this->cache->set( 'uid_' . $this->uid, $this->data );
+		}
+
+		return $this->data['secret'];
+	}
+
+	private function fetch_user( string $uid ): array {
+		if ( $this->pt === null ) {
+			$this->pt = new cLDAP( $this->ldap_args[0], $this->ldap_args[1], $this->ldap_args[2], $this->ldap_args[3], $this->ldap_args[4] );
+		}
 		$fff = [];
 
 		if ( $this->remap_users !== null && isset( $this->remap_users[$uid] ) ) {
