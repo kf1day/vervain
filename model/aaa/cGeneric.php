@@ -6,15 +6,16 @@ abstract class cGeneric extends \app\cModel {
 	protected $user = null;
 	protected $data = null;
 
-	abstract protected function backend_get_pass(): string;
-	abstract protected function backend_get_data();
+	abstract protected function get_pass(): string;
+	abstract protected function get_data();
 
 	final public function auth_env() {
-		if ( $u = $_SERVER['PHP_AUTH_USER'] ?? false ) {
-			$this->user = strtolower( $u );
+		$user = $_SERVER['PHP_AUTH_USER'] ?? false;
+		if ( $user ) {
+			$this->user = strtolower( $user );
 			$this->uid = self::usrcode( $this->user );
-			$secret = $this->backend_get_pass();
-			$this->backend_get_data();
+			$secret = $this->get_pass();
+			$this->get_data();
 
 			return [ $this->uid, self::keyring( $secret ) ];
 		}
@@ -22,20 +23,20 @@ abstract class cGeneric extends \app\cModel {
 	}
 
 	final public function auth_cookie() {
-		if ( $this->user !== null ) return $this->user;
-
 		$uid = $_COOKIE['UID'] ?? false;
 		$hash = $_COOKIE['HASH'] ?? false;
 		if ( $uid && $hash ) {
-			if ( $u = self::usrcode( $uid, true ) ) {
-				$t = $this->cache->get( 'acl_' . $uid, [ $this, 'fetch_user' ], [ $u ] );
-				if ( self::keyring( $t['secret'], $hash ) ) {
-					$this->user = new cAuthUserInfo( $t );
-					return $this->user;
-				}
+			$this->uid = $uid;
+			$this->user = self::usrcode( $uid, true );
+			$secret = $this->get_pass();
+			if ( self::keyring( $secret, $hash ) ) {
+				$this->get_data();
+			} else {
+				throw new \EClientError( 401 );
 			}
+		} else {
+			throw new \EClientError( 403 );
 		}
-		throw new \EClientError( 401 );
 	}
 
 	final public static function keyring( string $secret, $compare = null ) {

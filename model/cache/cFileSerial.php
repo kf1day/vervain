@@ -29,7 +29,7 @@ class cFileSerial implements iCacher {
 
 	// interface methods
 	public function get( string $key, callable $callback, array $args = [], $version = null ) {
-		if ( $version === null) {
+		if ( $version === null || $version === -1 ) {
 			$force_update = false;
 		} else {
 			$current = $this->vx[$key] ?? false;
@@ -38,7 +38,9 @@ class cFileSerial implements iCacher {
 
 		if ( $force_update || ( $fff = $this->pt[$key] ?? false ) === false ) {
 			$fff = call_user_func_array( $callback, $args );
-			$this->set( $key, $fff, $version );
+			if ( $version !== -1 ) {
+				$this->set( $key, $fff, $version );
+			}
 		}
 		return $fff;
 	}

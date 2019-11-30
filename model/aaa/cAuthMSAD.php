@@ -46,16 +46,16 @@ class cAuthMSAD extends cGeneric {
 		$this->remap_users = $remap;
 	}
 
-	protected function backend_get_pass(): string {
+	protected function get_pass(): string {
 		if ( $this->data === null ) {
-			$this->data = $this->cache->get( 'uid_' . $this->uid, [ $this, 'fetch_user' ], [ $this->user ] );
+			$this->data = $this->cache->get( 'uid' . $this->uid, [ $this, 'backend_get_data' ], [ $this->user ], -1 );
 		}
 		return $this->data['secret'];
 	}
 
-	protected function backend_get_data() {
+	protected function get_data() {
 		if ( $this->data === null ) {
-			$this->data = $this->cache->get( 'uid_' . $this->uid, [ $this, 'fetch_user' ], [ $this->user ] );
+			$this->data = $this->cache->get( 'uid' . $this->uid, [ $this, 'backend_get_data' ], [ $this->user ] );
 		}
 		if ( $this->pt !== null ) {
 			$this->cache->set( 'uid_' . $this->uid, $this->data );
@@ -64,7 +64,7 @@ class cAuthMSAD extends cGeneric {
 		return $this->data['secret'];
 	}
 
-	private function fetch_user( string $uid ): array {
+	public function backend_get_data( string $uid ) {
 		if ( $this->pt === null ) {
 			$this->pt = new cLDAP( $this->ldap_args[0], $this->ldap_args[1], $this->ldap_args[2], $this->ldap_args[3], $this->ldap_args[4] );
 		}

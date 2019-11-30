@@ -79,9 +79,10 @@ class ERedirect extends Exception {
 		} else {
 			$scheme = 'http';
 		}
-		$host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'];
-		if ( ! in_array( $scheme . $_SERVER['SERVER_PORT'], [ 'http80', 'https443' ] ) ) $host .= ':' . $_SERVER['SERVER_PORT'];
-		header( 'Location: ' . $scheme . '://' . $host . $this->url, true, 302 ); // absolute path required due to RFC
+		$url = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'];
+		if ( ! in_array( $scheme . $_SERVER['SERVER_PORT'], [ 'http80', 'https443' ] ) ) $url .= ':' . $_SERVER['SERVER_PORT'];
+		$url .= $this->url;
+		header( sprintf( 'Location: %s://%s', $scheme, $url ), true, 302 ); // absolute path required due to RFC
 	}
 }
 
