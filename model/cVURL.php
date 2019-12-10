@@ -14,7 +14,7 @@ class cVURL extends \app\cModel {
 	public static function raw( string $uri, $method, array $headers = [], string $body = '', &$status = null ) {
 
 		if ( ! in_array( $method, self::METHODS ) ) return false;
-	
+
 		$opts['http']['method'] = $method;
 		$opts['http']['content'] = $body;
 		$opts['http']['header'] = '';

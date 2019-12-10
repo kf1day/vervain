@@ -18,7 +18,6 @@ final class map {
 
 	public function routing( &$path ) {
 		$map = $this->pt;
-		$action = null;
 		$method = null;
 		$args = [];
 		$nice = '/';

@@ -8,10 +8,10 @@ abstract class cModel {
 abstract class cView {
 	private $path = '';
 	private $list = [];
-	private $next = null;
+	private $next = false;
 
-	public function __construct( $path = '' ) {
-		$this->path = ( $path == '' ) ? APP_ROOT : APP_ROOT . '/' . trim( $path, '/' );
+	public function __construct( $path = null ) {
+		$this->path = ( $path === null ) ? APP_ROOT : APP_ROOT . '/' . trim( $path, '/' );
 		if ( ! is_dir( $this->path ) ) throw new \Exception( sprintf( 'Template directory is unreadable: "%s"', $this->path ) );
 	}
 
@@ -20,30 +20,38 @@ abstract class cView {
 	}
 
 	public function load() {
-		$template = func_get_args();
-		foreach( $template as $tmp ) {
-			if ( is_string( $tmp ) ) {
-				if ( is_file( $this->path . '/' . $tmp ) ) {
-					$this->list[] = $tmp;
+		if ( $this->next === false ) {
+			$template = func_get_args();
+			foreach( $template as $tmp ) {
+				if ( is_string( $tmp ) ) {
+					if ( is_file( $this->path . '/' . $tmp ) ) {
+						$this->list[] = $tmp;
+					} else {
+						throw new \Exception( sprintf( 'Template is not found: "%s/%s"', $this->path, $tmp ) );
+					}
 				} else {
-					throw new \Exception( sprintf( 'Template is not found: "%s/%s"', $this->path, $tmp ) );
+					throw new \Exception( 'Template should be a string pathname' );
 				}
 			}
+		} else {
+			throw new \Exception( 'Cannot load templates while output is processing' );
 		}
 	}
 
 	protected function fetch() {
-		if ( $this->next === false ) {
+		$tmp = ( $this->next === false ) ? reset( $this->list ) : next( $this->list );
+		if ( $tmp === false ) {
+			$this->next = false;
 			return false;
-		} elseif ( $this->next === null ) {
-			$tmp = reset( $this->list );
 		} else {
-			$tmp = next( $this->list );
-		}
-		if ( $this->next = $tmp ) {
+			$this->next = true;
 			return $this->path . '/' . $tmp;
 		}
-		return false;
+	}
+
+	protected function ob_html_closure( $buf ) {
+		$buf = preg_replace( '/<!--.*?-->|(?<=>)\s+(?=<)/', '', $buf );
+		return $buf;
 	}
 
 	abstract public function display();

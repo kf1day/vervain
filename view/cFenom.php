@@ -12,7 +12,7 @@ class cFenom extends \app\cView {
 
 	protected $pt = null;
 
-	const PATH = APP_CORE . '/cache' . '/' . APP_HASH . '/fenom';
+	const PATH = APP_CORE . '/cache/' . APP_HASH . '/fenom';
 
 	public function __construct( $path, $opts ) {
 		parent::__construct( $path );
@@ -25,7 +25,7 @@ class cFenom extends \app\cView {
 
 	public function display( $vars = null ) {
 		if  ( $tmp = $this->fetch() ) {
-			$this->pt->display( $tpl, $vars );
+			$this->pt->display( $tmp, $vars );
 		}
 	}
 }

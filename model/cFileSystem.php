@@ -1,6 +1,6 @@
 <?php namespace model;
 
-class cFileSystem {
+class cFileSystem extends \app\cModel {
 
 	// make dir
 	static public function md( $path ) {
@@ -48,6 +48,21 @@ class cFileSystem {
 			case 'file':
 				$h = ( $binary ) ? fopen( $path, 'wb' ) : fopen( $path, 'w' );
 				fwrite( $h, $data );
+				fclose( $h );
+				return true;
+			default:
+				throw new \Exception( 'Path is not a file: ' . $path );
+		}
+	}
+
+	static public function cat( string $path, bool $binary = true ) {
+		$type = @filetype( $path );
+
+		switch( $type ) {
+			case false:
+			case 'file':
+				$h = fopen( $path, ( $binary ) ? 'rb' : 'r' );
+				fpassthru( $h );
 				fclose( $h );
 				return true;
 			default:

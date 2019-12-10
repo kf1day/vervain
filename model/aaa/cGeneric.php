@@ -6,7 +6,7 @@ abstract class cGeneric extends \app\cModel {
 	protected $user = null;
 	protected $data = null;
 
-	abstract protected function get_pass(): string;
+	abstract protected function get_pass();
 	abstract protected function get_data();
 
 	final public function auth_env() {
@@ -22,6 +22,23 @@ abstract class cGeneric extends \app\cModel {
 		throw new \Exception( 'Failed to fetch authorized user' );
 	}
 
+	final public function auth_bearer() {
+		$user = $_SERVER['REMOTE_ADDR'] ?? false;
+		$hash = $_SERVER['HTTP_AUTHORIZATION'] ?? false;
+		if ( $hash && strpos( strtolower( $hash ), 'bearer ' ) === 0 ) {
+			$hash = substr( $hash, 7 );
+			$this->user = $user;
+			$secret = $this->get_pass();
+			if ( $secret !== null && self::keyring( $secret, $hash ) ) {
+				$this->get_data();
+			} else {
+				throw new \EClientError( 403 );
+			}
+		} else {
+			throw new \EClientError( 401 );
+		}
+	}
+
 	final public function auth_cookie() {
 		$uid = $_COOKIE['UID'] ?? false;
 		$hash = $_COOKIE['HASH'] ?? false;
@@ -32,10 +49,10 @@ abstract class cGeneric extends \app\cModel {
 			if ( self::keyring( $secret, $hash ) ) {
 				$this->get_data();
 			} else {
-				throw new \EClientError( 401 );
+				throw new \EClientError( 403 );
 			}
 		} else {
-			throw new \EClientError( 403 );
+			throw new \EClientError( 401 );
 		}
 	}
 

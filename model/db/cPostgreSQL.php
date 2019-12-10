@@ -10,11 +10,11 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 		if ( ! extension_loaded( 'pgsql' ) ) throw new \Exception( 'PGSQL module not loaded' );
 
 		$s = "options='--client_encoding=UTF8'";
-		if ( $host != '' ) $s .= ' host='.$host;
-		if ( $port != '' ) $s .= ' port='.$port;
-		if ( $base != '' ) $s .= ' dbname='.$base;
-		if ( $user != '' ) $s .= ' user='.$user;
-		if ( $pass != '' ) $s .= ' password='.$pass;
+		if ( $host != '' ) $s .= ' host=' . $host;
+		if ( $port != '' ) $s .= ' port=' . $port;
+		if ( $base != '' ) $s .= ' dbname=' . $base;
+		if ( $user != '' ) $s .= ' user=' . $user;
+		if ( $pass != '' ) $s .= ' password=' . $pass;
 		$this->pt = @pg_pconnect( $s );
 
 		if ( ! $this->pt ) throw new \Exception( 'PGSQL connection failed' );
@@ -113,6 +113,13 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 		pg_free_result( $this->rx );
 		$this->rx = null;
 		return $fff;
+	}
+
+	public function raw( $query ) {
+		$this->rx = @pg_query( $this->pt, $query . ';' );
+		if ( ! $this->rx ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
+		return pg_num_rows( $this->rx );
+
 	}
 
 }

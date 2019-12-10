@@ -46,7 +46,7 @@ class cAuthMSAD extends cGeneric {
 		$this->remap_users = $remap;
 	}
 
-	protected function get_pass(): string {
+	protected function get_pass() {
 		if ( $this->data === null ) {
 			$this->data = $this->cache->get( 'uid' . $this->uid, [ $this, 'backend_get_data' ], [ $this->user ], -1 );
 		}
