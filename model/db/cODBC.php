@@ -1,4 +1,4 @@
-<?php
+<?php namespace model\db;
 
 class cODBC extends \app\cModel implements iSQL {
 
@@ -13,7 +13,7 @@ class cODBC extends \app\cModel implements iSQL {
 			$this->pt = odbc_pconnect( $dsn, '', '' );
 		}
 		if ( ! $this->pt ) {
-			throw new Exception( 'DBA connection failed' );
+			throw new \Exception( 'DBA connection failed' );
 		}
 	}
 
@@ -22,24 +22,24 @@ class cODBC extends \app\cModel implements iSQL {
 		if ( is_array( $fields ) ) {
 			$fields = implode( '", "', $fields );
 		}
-		$q = 'SELECT "'.$fields.'" FROM "'.$table.'"';
+		$q = 'SELECT "' . $fields . '" FROM "' . $table . '"';
 		if ( is_array( $filter ) && count( $filter ) > 0 ) {
 			$t = [];
-			foreach( $filter as $k => $v ) $t[] = '"'.$k.'" = '.$v.'';
-			$q .= ' WHERE '.implode( ' AND ', $t );
+			foreach( $filter as $k => $v ) $t[] = '"' . $k . '" = ' . $v . '';
+			$q .= ' WHERE ' . implode( ' AND ', $t );
 		}
 		if ( ( is_array( $sort ) && count( $sort ) > 0 ) || ( $sort && $sort = [ $sort ] ) ) {
 			$t = [];
 			foreach( $sort as $v ) {
-				$v = '"'.$v.'"';
+				$v = '"' . $v . '"';
 				$v = preg_replace( '/^"\+(.*)"$/', '"$1" ASC', $v );
 				$v = preg_replace( '/^"\-(.*)"$/', '"$1" DESC', $v );
 				$t[] = $v;
 			}
-			$q .= ' ORDER BY '.implode( ', ', $t );
+			$q .= ' ORDER BY ' . implode( ', ', $t );
 		}
-		$this->rx = odbc_exec( $this->pt, $q.';' );
-		if ( ! $this->rx ) throw new Exception( 'DBA query error: '.$q.';' );
+		$this->rx = odbc_exec( $this->pt, $q . ';' );
+		if ( ! $this->rx ) throw new \Exception( 'DBA query error: ' . $q . ';' );
 		return odbc_num_rows( $this->rx );
 	}
 

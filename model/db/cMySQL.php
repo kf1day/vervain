@@ -27,7 +27,7 @@ class cMySQL extends \app\cModel implements iSQL {
 		$q = sprintf( 'SELECT `%s` FROM `%s`', implode( '`, `', $fields ), $table );
 		if ( is_array( $filter ) && ! empty( $filter ) ) {
 			foreach( $filter as $k => &$v ) $v = '`' . $k . '` = "' . mysqli_real_escape_string( $this->pt, $v ) . '"';
-			$q .= ' WHERE '.implode( ' AND ', $filter );
+			$q .= ' WHERE ' . implode( ' AND ', $filter );
 		}
 		if ( ( is_array( $sort ) && ! empty( $sort ) ) ) {
 
@@ -41,9 +41,9 @@ class cMySQL extends \app\cModel implements iSQL {
 					$v = '"' . $t . '"';
 				}
 			}
-			$q .= ' ORDER BY '.implode( ', ', $sort );
+			$q .= ' ORDER BY ' . implode( ', ', $sort );
 		}
-		$this->rx = mysqli_query( $this->pt, $q.';' );
+		$this->rx = mysqli_query( $this->pt, $q . ';' );
 		if ( ! $this->rx ) throw new \Exception( 'MySQL query error: ' . mysqli_error( $this->pt ) );
 		return mysqli_num_rows( $this->rx );
 	}
@@ -54,7 +54,7 @@ class cMySQL extends \app\cModel implements iSQL {
 		array_walk( $keyval, [ $this, 'escape' ], false );
 
 		$q = sprintf( 'INSERT INTO `%s`(%s) VALUES(%s)', $table, implode(', ', array_keys( $keyval ) ), implode(', ', $keyval ) );
-		$q = mysql_query( $this->pt, $q.';' );
+		$q = mysql_query( $this->pt, $q . ';' );
 
 		if ( ! $q ) throw new \Exception( 'MySQL query error: ' . mysqli_error( $this->pt ) );
 		$t = mysqli_affected_rows( $q );
@@ -69,7 +69,7 @@ class cMySQL extends \app\cModel implements iSQL {
 		array_walk( $filter, [ $this, 'escape' ], true );
 
 		$q = sprintf( 'UPDATE `%s` SET %s WHERE %s', $table, implode( ', ', $fields ), implode( ' AND ', $filter ) );
-		$q = mysql_query( $this->pt, $q.';' );
+		$q = mysql_query( $this->pt, $q . ';' );
 
 		if ( ! $q ) throw new \Exception( 'MySQL query error: ' . mysqli_error( $this->pt ) );
 		$t = mysqli_affected_rows( $q );
@@ -83,7 +83,7 @@ class cMySQL extends \app\cModel implements iSQL {
 		array_walk( $filter, [ $this, 'escape' ], true );
 
 		$q = sprintf( 'DELETE FROM `%s` WHERE %s', $table, implode( ' AND ', $filter ) );
-		$q = mysql_query( $this->pt, $q.';' );
+		$q = mysql_query( $this->pt, $q . ';' );
 
 		if ( ! $q ) throw new \Exception( 'MySQL query error: ' . mysqli_error( $this->pt ) );
 		$t = mysqli_affected_rows( $q );

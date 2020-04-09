@@ -22,19 +22,19 @@ class cLDAP extends \app\cModel implements iSQL {
 		$this->root = $base;
 	}
 
-	public function get( string $table, array $fields, $filter = null, $sort = null ) {
-		$this->select( $table, $fields, $filter, $sort );
+	public function get( string $table, array $fields, $filter = null ) {
+		$this->select( $table, $fields, $filter );
 		return $this->fetch_all();
 	}
 
-	public function select( string $table, array $fields, $filter = null, $sort = null ) {
+	public function select( string $table, array $fields, $filter = null ) {
 		$root = ( $table === '' ) ? $this->root : $table . ',' . $this->root;
 		$filt = '';
 		foreach ( $filter as $k => $v ) {
-			$filt .= '('.$k.'='.$v.')';
+			$filt .= '(' . $k . '=' . $v . ')';
 		}
 		$this->el = null;
-		if ( count( $filter ) > 1 ) $filt = '(&'.$filt.')';
+		if ( count( $filter ) > 1 ) $filt = '(&' . $filt . ')';
 		if ( $this->rx = ldap_search( $this->pt, $root, $filt, $fields ) ) {
 			$this->ax = $fields;
 			return ldap_count_entries( $this->pt, $this->rx );
