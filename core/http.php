@@ -2,6 +2,9 @@
 
 final class instance {
 
+	static $cache;
+	static $map;
+
 	public function __construct() {
 
 		spl_autoload_register( [ $this, 'loader' ] );
@@ -22,12 +25,12 @@ final class instance {
 		try {
 			$ref = new ReflectionClass( $cvar );
 			if ( ! $ref->isSubclassOf( '\\model\\cache\\iCacher' ) ) throw new Exception( sprintf( 'Class "%s" must implement "\\model\\cache\\iCacher"', $cvar ) );
-			$cache = $ref->newInstanceArgs( $cvar_args );
+			self::$cache = $ref->newInstanceArgs( $cvar_args );
 			$ref = null;
 
-			$map = new map( $cache );
+			self::$map = new map();
 			try {
-				list( $action, $method, $args ) = $map->routing( $path );
+				list( $action, $method, $args ) = self::$map->routing( $path );
 			} catch( EClientError $e ) {
 				$action = '__default';
 				$method = '__onerror';
@@ -37,7 +40,7 @@ final class instance {
 			$ref = new ReflectionClass( '\\action\\' . $action );
 			if ( ! $ref->isSubclassOf( '\\app\\cAction' ) ) throw new Exception( sprintf( 'Class "\\action\\%s" must be instance of "\\app\\cAction"', $action ) );
 
-			$cls = $ref->newInstance( $cache, $path );
+			$cls = $ref->newInstance( $path );
 			if ( $onload ) $ref->getMethod( '__onload' )->invoke( $cls );
 			if( ! $ref->hasMethod( $method ) ) throw new EClientError( 404, sprintf( 'Method "\\%s::%s()" not found!', $ref->getName(), $method ) );
 			$ref->getMethod( $method )->invokeArgs( $cls, $args );
@@ -74,7 +77,7 @@ class ERedirect extends Exception {
 	public function __invoke() {
 		if ( isset( $_SERVER['REQUEST_SCHEME'] ) ) {
 			$scheme = $_SERVER['REQUEST_SCHEME'];
-		} elseif ( isset( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] === 'on' ) { // http://nginx.org/en/docs/http/ngx_http_core_module.html#var_https
+		} elseif ( 'on' === ( $_SERVER['HTTPS'] ?? null ) ) { // http://nginx.org/en/docs/http/ngx_http_core_module.html#var_https
 			$scheme = 'https';
 		} else {
 			$scheme = 'http';

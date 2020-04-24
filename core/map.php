@@ -3,20 +3,51 @@
 final class map {
 
 	private $pt = null;
+	private $trace = [];
 
 	const PATH = APP_ROOT . '/sitemap.php';
 
-	public function __construct( $cache ) {
+	public function __construct() {
 		if ( ! is_file( self::PATH ) ) throw new EMapParser( 'File not found', self::PATH, 'Check the file is existing and readable' );
-		$this->pt = $cache->get( 'sitemap', function() {
-			$this->pt = require self::PATH;
-			$this->parse( $this->pt );
-			$this->merge( $this->pt );
-			return $this->pt;
+		$this->pt = \instance::$cache->get( 'sitemap', function() {
+			$ret = require self::PATH;
+			$this->parse( $ret );
+			$this->merge( $ret );
+			return $ret;
 		}, [], filemtime( self::PATH ) );
 	}
 
+	public function path() {
+		$args = func_get_args();
+		$val = reset( $args );
+		$path = [];
+		foreach( $this->trace as $v ) {
+			if ( '*' !== $v ) {
+				$path[] = $v;
+			} elseif ( false === $val ) {
+				trigger_error( 'Undefined replacer' );
+				$path[] = '*';
+			} elseif ( null === $val ) {
+				$val = next( $args );
+			} else {
+				$path[] = $val;
+				$val = next( $args );
+			}
+		}
+		while ( false !== $val ) {
+			if ( null === $val ) {
+				array_pop( $path );
+			}
+			else {
+				$path[] = $val;
+			}
+			$val = next( $args );
+		}
+		return '/' . implode( '/', $path ) . '/';
+	}
+
 	public function routing( &$path ) {
+		$this->trace = [];
 		$map = $this->pt;
 		$method = null;
 		$args = [];
@@ -38,12 +69,14 @@ final class map {
 			if ( $map[4] === null ) break;
 			foreach ( $map[4] as $map_child ) {
 				if ( $map_child[0] === '*' ) {
+					$this->trace[] = '*';
 					$flag = false;
 					$nice .= $node . '/';
 					$args[] = $node;
 					$node = strtok( '/' );
 					$map = $map_child;
 				} elseif ( $node === $map_child[0] ) {
+					$this->trace[] = $node;
 					$flag = false;
 					$nice .= $node . '/';
 					$node = strtok( '/' );
@@ -135,7 +168,7 @@ final class map {
 					if ( $uniq[$id][1] === null ) {
 						list( $uniq[$id][1], $uniq[$id][2], $uniq[$id][3] ) = [ $map_child[1], $map_child[2], $map_child[3] ];
 					} elseif ( $map_child[1] !== null ) {
-						throw new EMapParser( 'Duplicated node detected ', $path . '/' . $uniq[$id][0], 'Remove or rename the duplicate node' );
+						throw new EMapParser( 'Duplicated node detected', $path . '/' . $uniq[$id][0], 'Remove or rename the duplicate node' );
 					}
 					if ( $map_child[4] && $uniq[$id][4] ) {
 						$uniq[$id][4] = array_merge( $uniq[$id][4], $map_child[4] );
@@ -157,6 +190,7 @@ final class map {
 			}
 		}
 	}
+
 }
 
 class EMapParser extends Exception {

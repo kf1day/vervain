@@ -58,11 +58,9 @@ abstract class cView {
 }
 
 abstract class cAction {
-	protected $app_cache = null;
-	protected $app_path = '';
-	final public function __construct( $cache, string $path ) {
-		$this->app_cache = $cache;
-		$this->app_path = $path;
+	protected $PATH = '';
+	final public function __construct( string $path ) {
+		$this->PATH = $path;
 	}
 
 	public function index() {
@@ -72,9 +70,7 @@ abstract class cAction {
 	public function __onload() {
 	}
 
-	public function __onerror( $code, $body = '' ) {
-		if ( 407 < $code || $code <  401 ) $code = 500;
-		http_response_code( $code );
-		echo 'Default error handler: ' . $body;
+	public function __onerror( int $code, string $body = '' ) {
+		printf( 'Default error handler: %s (%d)', $body, $code );
 	}
 }
