@@ -19,11 +19,7 @@ class cParsedown extends \app\cView {
 
 	public function display() {
 		if  ( $tmp = $this->fetch() ) {
-			if ( pathinfo( $tmp, PATHINFO_EXTENSION ) === 'md' ) {
-				ob_start( [ $this, 'ob_md_parse' ] );
-			} else {
-				ob_start( [ $this, 'ob_html_closure' ] );
-			}
+			ob_start( [ $this, 'ob_md_parse' ] );
 			cFileSystem::cat( $tmp );
 			ob_end_flush();
 		}

@@ -1,6 +1,5 @@
 <?php namespace model\aaa;
 use \model\db\cLDAP;
-use \model\cache\iCacher;
 
 class cAuthUserInfo {
 	public $name = '';
@@ -22,8 +21,6 @@ class cAuthUserInfo {
 
 class cAuthMSAD extends cGeneric {
 
-	private $cache = null;
-
 	protected $pt = null;
 	protected $ldap_args = [];
 	protected $target_groups = [];
@@ -33,8 +30,7 @@ class cAuthMSAD extends cGeneric {
 	const BIT_OR = ':1.2.840.113556.1.4.804:'; // LDAP_MATCHING_RULE_BIT_OR
 	const IN_CHAIN = ':1.2.840.113556.1.4.1941:'; //LDAP_MATCHING_RULE_IN_CHAIN
 
-	public function __construct( iCacher $cache, $host, $port, $base, $user, $pass ) {
-		$this->cache = $cache;
+	public function __construct( $host, $port, $base, $user, $pass ) {
 		$this->ldap_args = [ $host, $port, $base, $user, $pass ];
 	}
 
@@ -52,17 +48,17 @@ class cAuthMSAD extends cGeneric {
 
 	protected function get_pass() {
 		if ( $this->data === null ) {
-			$this->data = $this->cache->get( 'uid' . $this->uid, [ $this, 'backend_get_data' ], [ $this->user ], -1 );
+			$this->data = \instance::$cache->get( 'uid' . $this->uid, [ $this, 'backend_get_data' ], [ $this->user ], -1 );
 		}
 		return $this->data['secret'];
 	}
 
 	protected function get_data() {
 		if ( $this->data === null ) {
-			$this->data = $this->cache->get( 'uid' . $this->uid, [ $this, 'backend_get_data' ], [ $this->user ] );
+			$this->data = \instance::$cache->get( 'uid' . $this->uid, [ $this, 'backend_get_data' ], [ $this->user ] );
 		}
 		if ( $this->pt !== null ) {
-			$this->cache->set( 'uid_' . $this->uid, $this->data );
+			\instance::$cache->set( 'uid_' . $this->uid, $this->data );
 		}
 
 		return $this->data['secret'];
@@ -70,7 +66,7 @@ class cAuthMSAD extends cGeneric {
 
 	public function backend_get_data( string $uid ) {
 		if ( $this->pt === null ) {
-			$this->pt = new cLDAP( $this->ldap_args[0], $this->ldap_args[1], $this->ldap_args[2], $this->ldap_args[3], $this->ldap_args[4] );
+			$this->pt = cLDAP::factory( $this->ldap_args );
 		}
 		$fff = [];
 

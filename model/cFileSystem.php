@@ -59,7 +59,6 @@ class cFileSystem extends \app\cModel {
 		$type = @filetype( $path );
 
 		switch( $type ) {
-			case false:
 			case 'file':
 				$h = fopen( $path, ( $binary ) ? 'rb' : 'r' );
 				fpassthru( $h );
