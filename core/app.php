@@ -1,7 +1,11 @@
 <?php namespace app;
 
 abstract class cModel {
-	/* Is there any common methods 4 all models? May be this class is just useless */
+	
+	static function factory( array $args ) {
+		$ref = new \ReflectionClass( static::class );
+		return $ref->newInstanceArgs( $args );
+	}
 }
 
 
