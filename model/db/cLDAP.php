@@ -22,12 +22,12 @@ class cLDAP extends \app\cModel implements iSQL {
 		$this->root = $base;
 	}
 
-	public function get( string $table, array $fields, $filter = null ) {
+	public function get( string $table, array $fields, array $filter = [] ) {
 		$this->select( $table, $fields, $filter );
 		return $this->fetch_all();
 	}
 
-	public function select( string $table, array $fields, $filter = null ) {
+	public function select( string $table, array $fields, array $filter = [] ) {
 		$root = ( $table === '' ) ? $this->root : $table . ',' . $this->root;
 		$filt = '';
 		foreach ( $filter as $k => $v ) {

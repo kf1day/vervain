@@ -6,9 +6,6 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 	protected $rx = null;
 	protected $cf = null;	//keeps indexes of multi-row SELECT query
 
-	const XN='\^N';		//col-break
-	const XR='\^R';		//row-break
-
 	private function parse_col( string &$col, array &$sort ) {
 		$t = explode( '/', ltrim( $col, '+-' ) . '/' );
 		if ( $col[0] === '+') {
@@ -21,8 +18,8 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 				$col = sprintf( 'EXTRACT(epoch from "%s")::int', $t[0] );
 			break;
 			case 'bit':
-			case 'bool':
 			case 'int':
+			case 'bool':
 			case 'text':
 					$col = sprintf( '"%s"::%s', $t[0], $t[1] );
 			break;
@@ -46,40 +43,55 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 		if ( ! $this->pt ) throw new \Exception( 'PGSQL connection failed' );
 	}
 
-	public function get( string $table, array $fields, $filter = null ) {
+	public function get( string $table, array $fields, array $filter = [] ) {
 		$this->select( $table, $fields, $filter );
 		return $this->fetch_all();
 	}
 
-	public function select( string $table, array $fields, $filter = null ) {
+	public function select( string $table, array $fields, array $filter = [] ) {
 		if ( empty( $fields ) ) return false;
 
 		$order_by = [];
 		$group_by = [];
 		$this->cf = null;
+		$i = 0;
 		foreach( $fields as $k => &$col ) {
 			if ( is_string( $col ) ) {
 				$this->parse_col( $col, $order_by );
 				$group_by[] = $col;
 			} elseif( is_array( $col ) ) {
-				$this->cf[] = $k;
+				$this->cf[] = $i;
 				$sort = [];
 				foreach ( $col as &$v ) {
 					$this->parse_col( $v, $sort );
 				}
 				$sort = ( empty( $sort ) ) ? '' : ' ORDER BY ' . implode( ', ', $sort );
-				$col = sprintf( 'STRING_AGG(CONCAT(%s), \'%s\'%s)', implode( ', \'' . self::XN . '\', ', $col ), self::XR, $sort );
+				$col = sprintf( 'json_agg(json_build_array(%s)%s)', implode( ', ', $col ), $sort );
 			}
-
+			$i++;
 		}
 
 		$q = sprintf( 'SELECT %s FROM "%s"', implode( ', ', $fields ), $table );
-		if ( is_array( $filter ) && ! empty( $filter ) ) {
-			$filter = pg_convert( $this->pt, $table, $filter );
-			foreach( $filter as $k => &$v ) {
-				$v = $k . ' = ' . $v ;
+		if ( ! empty( $filter ) ) {
+			$sort = [];
+			foreach( $filter as $k => &$col ) {
+				$t = explode( '/', $k . '/' );
+				$sort[ $t[0] ] = $col;
+				switch( $t[1] ) {
+					case 'neq':
+						$col = '%s != %s';
+					break;
+					default:
+						$col = '%s = %s';
+				}
 			}
-			$q .= ' WHERE ' . implode( ' AND ', $filter );
+			$sort = pg_convert( $this->pt, $table, $sort );
+			$f = reset( $filter );
+			foreach( $sort as $k => &$col ) {
+				$col = sprintf( $f, $k, $col );
+				$f = next( $filter );
+			}
+			$q .= ' WHERE ' . implode( ' AND ', $sort );
 		}
 
 		if ( $this->cf && ! empty( $group_by ) ) {
@@ -98,10 +110,9 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 	public function insert( string $table, array $keyval ) {
 		if ( empty( $keyval ) ) return false;
 
-		$q = pg_insert( $this->pt, $table, $keyval, PGSQL_DML_STRING );
-		if ( $q !== false ) $q = pg_query( $this->pt, $q );
+		$q = @pg_insert( $this->pt, $table, $keyval );
 
-		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
+		if ( $q === false ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
 		$t = pg_affected_rows( $q );
 		pg_free_result( $q );
 		return $t;
@@ -110,10 +121,9 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 	public function update( string $table, array $keyval, array $filter ) {
 		if ( empty( $keyval ) || empty( $filter ) ) return false;
 
-		$q = pg_update( $this->pt, $table, $keyval, $filter, PGSQL_DML_STRING );
-		if ( $q !== false ) $q = pg_query( $this->pt, $q );
+		$q = @pg_update( $this->pt, $table, $keyval, $filter );
 
-		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
+		if ( $q === false ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
 		$t = pg_affected_rows( $q );
 		pg_free_result( $q );
 		return $t;
@@ -122,10 +132,9 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 	public function delete( string $table, array $filter ) {
 		if ( empty( $filter ) ) return false;
 
-		$q = pg_delete( $this->pt, $table, $filter, PGSQL_DML_STRING );
-		if ( $q !== false ) $q = pg_query( $this->pt, $q );
+		$q = @pg_delete( $this->pt, $table, $filter );
 
-		if ( ! $q ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
+		if ( $q === false ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
 		$t = pg_affected_rows( $q );
 		pg_free_result( $q );
 		return $t;
@@ -135,16 +144,11 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 		if ( $this->rx === null ) return false;
 
 		$t = pg_fetch_row( $this->rx );
-		if ( ! $t ) {
+		if ( $t === false ) {
 			pg_free_result( $this->rx );
 			$this->rx = null;
 		} elseif ( $this->cf ) foreach ( $this->cf as $k ) {
-			$t[$k] = explode( self::XR, $t[$k] );
-			foreach( $t[$k] as &$n ) {
-				if ( strpos( $n, self::XN ) !== false ) {
-					$n = explode( self::XN, $n );
-				}
-			}
+			$t[$k] = json_decode( $t[$k] );
 		}
 		return $t;
 	}
@@ -159,10 +163,16 @@ class cPostgreSQL extends \app\cModel implements iSQL {
 		return $fff;
 	}
 
-	public function raw( $query ) {
+	public function raw() {
+		$args = func_get_args();
+		foreach( $args as $k => &$v ) {
+			if ( $k === 0 ) continue;
+			if( is_string( $v ) ) $v = 'E\'' . pg_escape_string( $this->pt, $v ) . '\'';
+		}
+		$q = call_user_func_array( 'sprintf', $args );
 		$this->cf = null;
-		$this->rx = @pg_query( $this->pt, $query . ';' );
-		if ( ! $this->rx ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
+		$this->rx = @pg_query( $this->pt, $q . ';' );
+		if ( $this->rx === false ) throw new \Exception( 'PGSQL query error: ' . pg_last_error( $this->pt ) );
 		return pg_num_rows( $this->rx );
 
 	}
