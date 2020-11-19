@@ -3,13 +3,13 @@
 class cFileSystem extends \app\cModel {
 
 	// make dir
-	static public function md( $path ) {
+	static public function md( string $path, $mode = 0700 ) {
 //		$path = APP_ROOT . trim( $path, '/' );
 		$type = @filetype( $path );
 
 		switch( $type ) {
 			case false:
-				if ( ! mkdir( $path, 0700, true ) ) {
+				if ( ! mkdir( $path, $mode, true ) ) {
 					throw new \Exception( 'Cannot create directory: ' . $path );
 				}
 			case 'dir':
@@ -21,7 +21,7 @@ class cFileSystem extends \app\cModel {
 	}
 
 	// read file
-	static public function rf( $path, $binary = false ) {
+	static public function rf( string $path, bool $binary = false ) {
 //		$path = APP_ROOT . trim( $path, '/' );
 		$type = @filetype( $path );
 
@@ -39,7 +39,7 @@ class cFileSystem extends \app\cModel {
 	}
 
 	// write file #TODO: check dir, check fwrite status
-	static public function wf( $path, $data, $binary = false ) {
+	static public function wf( string $path, $data, bool $binary = false ) {
 //		$path = APP_ROOT . trim( $path, '/' );
 		$type = @filetype( $path );
 
